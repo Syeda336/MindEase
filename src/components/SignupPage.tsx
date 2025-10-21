@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "./firebase/firebase";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import { auth } from "./firebase/firebase"; // Keep your Firebase config import
 
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
+
 import { Badge } from "./ui/badge";
 import {
   Brain,
@@ -41,6 +43,34 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // 🧩 Your vanilla Firebase signup logic inside React
+  async function handleSignup(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("❌ Passwords do not match. Please recheck.");
+      return;
+    }
+
+    try {
+      const userCredential = await firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, password);
+
+      const user = userCredential.user;
+
+      // Optional: set display name
+      await user?.updateProfile({ displayName: fullName });
+
+      console.log("✅ Signed up as:", user?.email);
+      alert("Account created successfully!");
+      onSignUp();
+    } catch (error: any) {
+      console.error("❌ Error:", error.code, error.message);
+      alert(`Signup failed: ${error.message}`);
+    }
+  }
+
   const features = [
     { icon: Bot, text: "AI Care Buddy", color: "text-blue-500" },
     { icon: BookOpen, text: "Personal Journal", color: "text-green-500" },
@@ -51,33 +81,9 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
     { icon: Quote, text: "Motivational Quotes", color: "text-rose-500" }
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-      alert("❌ Passwords do not match. Please recheck.");
-      return;
-    }
-
-    try {
-      // ✅ Create account with Firebase
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // ✅ Update display name
-      await updateProfile(user, { displayName: fullName });
-
-      console.log("✅ Account created:", user);
-      onSignUp();
-    } catch (error: any) {
-      console.error("❌ Signup error:", error.message);
-      alert("Failed to create account. Please try again.");
-    }
-  };
-
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      {/* Background Image */}
+      {/* Background */}
       <div className="absolute inset-0">
         <ImageWithFallback
           src="https://images.unsplash.com/photo-1758800624783-1b0ac07ae4fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
@@ -119,7 +125,10 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
 
           <div className="grid grid-cols-2 gap-4">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div
+                key={index}
+                className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+              >
                 <feature.icon className={`h-5 w-5 ${feature.color}`} />
                 <span className="text-white text-sm">{feature.text}</span>
               </div>
@@ -138,7 +147,7 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
           </div>
         </div>
 
-        {/* Right Side - Signup Form */}
+        {/* Right Side */}
         <div className="w-full max-w-md mx-auto lg:ml-auto">
           <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
             <CardHeader className="text-center pb-4">
@@ -152,7 +161,7 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSignup} className="space-y-4">
                 {/* Full Name */}
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
@@ -238,56 +247,8 @@ export default function SignupPage({ onBack, onSignUp }: SignupPageProps) {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </form>
-
-              {/* Divider */}
-              <div className="relative">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-sm text-gray-500">
-                  or continue with
-                </span>
-              </div>
-
-              {/* Social Buttons */}
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full bg-white border-gray-200 hover:bg-gray-50">
-                  Continue with Google
-                </Button>
-                <Button variant="outline" className="w-full bg-white border-gray-200 hover:bg-gray-50">
-                  Continue with Facebook
-                </Button>
-              </div>
-
-              {/* Already have account */}
-              <div className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <button className="text-blue-600 hover:text-blue-700 hover:underline" onClick={onBack}>
-                  Sign in
-                </button>
-              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 z-10">
-        <div className="bg-black/20 backdrop-blur-sm border-t border-white/10">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-white/80 text-sm">
-              <div className="flex items-center gap-4">
-                <span>© 2024 MindCare</span>
-                <div className="flex gap-4">
-                  <button className="hover:text-white transition-colors">Terms</button>
-                  <button className="hover:text-white transition-colors">Privacy Policy</button>
-                  <button className="hover:text-white transition-colors">Contact</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-green-400" />
-                <span className="text-xs">Secure & Private</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

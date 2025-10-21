@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -207,14 +209,34 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [editMode, setEditMode] = useState(false);
   const [userData, setUserData] = useState({
-    name: 'Sarah Mitchell',
-    age: 28,
-    email: 'sarah.mitchell@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    bio: 'Focused on mindfulness and stress management. Passionate about mental wellness and personal growth.',
-    memberSince: 'January 2024'
+  name: '',
+  email: '',
+  age: '',
+  phone: '',
+  location: '',
+  bio: '',
+  memberSince: ''
+});
+
+// ✅ Fetch logged-in user info from Firebase Auth
+useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setUserData((prev) => ({
+        ...prev,
+        name: user.displayName || "Not provided",
+        email: user.email || "Not provided",
+        memberSince: user.metadata?.creationTime
+          ? new Date(user.metadata.creationTime).toLocaleDateString()
+          : "N/A",
+      }));
+    }
   });
+
+  return () => unsubscribe();
+}, []);
+
 
   const [notifications, setNotifications] = useState({
     therapy: true,

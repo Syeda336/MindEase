@@ -3,6 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import "firebase/compat/firestore";
+
+import { getFirestore } from "firebase/firestore";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBz9hjQi8RF55dSLe6fuNrcKLBE6Ftuedk",
   authDomain: "mindease-bd56f.firebaseapp.com",
@@ -13,10 +19,20 @@ const firebaseConfig = {
   measurementId: "G-NDK60P9SFH",
 };
 
+// ✅ Initialize once
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+export const db = getFirestore(app);
 
 // ✅ Export auth to use in LoginPage
-export const auth = getAuth(app);
-export default app;
+
+const auth = firebase.auth();
+
+export { firebase, auth };
+
+
